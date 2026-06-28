@@ -3,7 +3,14 @@
    API sync, token authorizations, Dynamic Month Calendar, Web Audio
    ========================================================================== */
 
-const API_URL = "http://localhost:5000/api";
+const API_URL = null;
+const STORAGE_KEY = "levelup_life_state";
+
+const DEFAULT_RIVALS = [
+    { name: "Nova", avatar: "mage", xp: 1250 },
+    { name: "Cipher", avatar: "ninja", xp: 840 },
+    { name: "Atlas", avatar: "warrior", xp: 420 }
+];
 
 // --- Global Application State ---
 let state = {
@@ -179,31 +186,162 @@ function getHeaders() {
 }
 
 async function apiRequest(endpoint, options = {}) {
-    try {
-        const res = await fetch(`${API_URL}${endpoint}`, {
-            ...options,
-            headers: {
-                ...getHeaders(),
-                ...options.headers
-            }
-        });
-        
-        if (res.status === 401 || res.status === 403) {
-            // Token expired or invalid, force signout
-            logout();
-            return null;
-        }
+    return localApiRequest(endpoint, options);
+}
 
-        const data = await res.json();
-        if (!res.ok) {
-            throw new Error(data.error || "Handshake failed");
-        }
-        return data;
+function createInitialState() {
+    return {
+        user: {
+            username: "Player 1",
+            avatar: "ninja",
+            level: 1,
+            xp: 0,
+            dailyStreak: 0,
+            weeklyStreak: 0,
+            lastActiveDate: getLocalDateString(),
+            xpEarnedToday: 0
+        },
+        tasks: [],
+        history: [],
+        achievements: [],
+        rivals: DEFAULT_RIVALS
+    };
+}
+
+function loadLocalState() {
+    try {
+        const stored = JSON.parse(localStorage.getItem(STORAGE_KEY));
+        return stored ? {
+            ...createInitialState(),
+            ...stored,
+            user: { ...createInitialState().user, ...(stored.user || {}) },
+            tasks: stored.tasks || [],
+            history: stored.history || [],
+            achievements: stored.achievements || [],
+            rivals: stored.rivals || DEFAULT_RIVALS
+        } : createInitialState();
     } catch (e) {
-        console.error(`API Error (${endpoint}):`, e);
-        notifyNewLog(`Network connection error to backend.`);
-        throw e;
+        console.warn("Local state restore failed, starting fresh.", e);
+        return createInitialState();
     }
+}
+
+function saveLocalState(nextState = state) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({
+        user: nextState.user,
+        tasks: nextState.tasks,
+        history: nextState.history,
+        achievements: nextState.achievements,
+        rivals: nextState.rivals && nextState.rivals.length ? nextState.rivals : DEFAULT_RIVALS
+    }));
+}
+
+function normalizeUserForApi(user) {
+    return {
+        username: user.username,
+        avatar: user.avatar,
+        level: user.level,
+        xp: user.xp,
+        daily_streak: user.dailyStreak,
+        weekly_streak: user.weeklyStreak,
+        last_active_date: user.lastActiveDate,
+        xp_earned_today: user.xpEarnedToday
+    };
+}
+
+async function localApiRequest(endpoint, options = {}) {
+    const method = (options.method || "GET").toUpperCase();
+    const body = options.body ? JSON.parse(options.body) : {};
+    const localState = loadLocalState();
+
+    if (endpoint === "/auth/login" || endpoint === "/auth/register") {
+        if (endpoint === "/auth/register" && body.username) {
+            localState.user.username = body.username;
+        }
+        saveLocalState(localState);
+        return { token: "local-session" };
+    }
+
+    if (endpoint === "/user/profile") {
+        if (method === "PUT") {
+            localState.user.username = body.username || localState.user.username;
+            localState.user.avatar = body.avatar || localState.user.avatar;
+            saveLocalState(localState);
+        }
+        return normalizeUserForApi(localState.user);
+    }
+
+    if (endpoint === "/user/xp" && method === "PUT") {
+        localState.user = { ...localState.user, ...body };
+        saveLocalState(localState);
+        return normalizeUserForApi(localState.user);
+    }
+
+    if (endpoint === "/tasks") {
+        if (method === "POST") {
+            localState.tasks.push({ ...body, completedToday: false, streak: 0, createdDate: new Date().toISOString() });
+            saveLocalState(localState);
+            return body;
+        }
+        return localState.tasks;
+    }
+
+    if (endpoint.startsWith("/tasks/")) {
+        const id = endpoint.split("/").pop();
+        if (method === "DELETE") {
+            localState.tasks = localState.tasks.filter(t => t.id !== id);
+            saveLocalState(localState);
+            return { ok: true };
+        }
+        if (method === "PUT") {
+            localState.tasks = localState.tasks.map(t => t.id === id ? { ...t, ...body } : t);
+            saveLocalState(localState);
+            return localState.tasks.find(t => t.id === id);
+        }
+    }
+
+    if (endpoint === "/history") {
+        if (method === "POST") {
+            localState.history.push(body);
+            saveLocalState(localState);
+            return body;
+        }
+        if (method === "DELETE") {
+            localState.history = state.history;
+            saveLocalState(localState);
+            return { ok: true };
+        }
+        return localState.history;
+    }
+
+    if (endpoint === "/achievements") {
+        if (method === "PUT") {
+            localState.achievements = body.achievements || [];
+            saveLocalState(localState);
+            return localState.achievements;
+        }
+        return localState.achievements;
+    }
+
+    if (endpoint === "/leaderboard") {
+        const playerInfo = getLevelInfo(localState.user.xp);
+        const players = [
+            { name: localState.user.username, avatar: localState.user.avatar, xp: localState.user.xp },
+            ...localState.rivals
+        ];
+        return players
+            .map(player => {
+                const info = getLevelInfo(player.xp);
+                return { ...player, level: info.level, rankTitle: info.rank };
+            })
+            .sort((a, b) => b.xp - a.xp || (a.name === localState.user.username ? -1 : 1));
+    }
+
+    if (endpoint === "/reminders/trigger") {
+        return { message: "Local reminders check completed." };
+    }
+
+    throw new Error(`Unsupported local endpoint: ${endpoint}`);
 }
 
 // --- Auth Systems UI & Logic ---
@@ -244,14 +382,10 @@ function initAuth() {
         const password = document.getElementById("login-password").value;
 
         try {
-            const data = await fetch(`${API_URL}/auth/login`, {
+            const resJson = await apiRequest("/auth/login", {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ email, password })
             });
-
-            const resJson = await data.json();
-            if (!data.ok) throw new Error(resJson.error || "Handshake error");
 
             localStorage.setItem("levelup_token", resJson.token);
             authScreen.style.display = "none";
@@ -279,14 +413,10 @@ function initAuth() {
         const password = document.getElementById("register-password").value;
 
         try {
-            const data = await fetch(`${API_URL}/auth/register`, {
+            const resJson = await apiRequest("/auth/register", {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ username, email, phone, password })
             });
-
-            const resJson = await data.json();
-            if (!data.ok) throw new Error(resJson.error || "Registration error");
 
             localStorage.setItem("levelup_token", resJson.token);
             authScreen.style.display = "none";
@@ -372,8 +502,8 @@ async function appBootstrap() {
         renderDashboard();
         notifyNewLog("Terminal synchronization sequence complete.");
     } catch (e) {
-        console.error("Bootstrap sync failed, running server check prompt", e);
-        alert("Warning: Could not connect to the LevelUp Life Backend Server! Ensure you started the node server (run: node backend/server.js).");
+        console.error("Local startup failed", e);
+        alert("Warning: LevelUp Life could not load saved progress. Try refreshing the page.");
     }
 }
 
@@ -1386,13 +1516,13 @@ document.getElementById("reset-database-btn").addEventListener("click", async ()
     SoundFX.playError();
     if (confirm("Permanently wipe all quest configurations and reset XP logs?")) {
         try {
+            state.history = [];
             await apiRequest("/history", { method: "DELETE" });
             // Remove tasks
             for (const t of state.tasks) {
                 await apiRequest(`/tasks/${t.id}`, { method: "DELETE" });
             }
             state.tasks = [];
-            state.history = [];
             state.user.xp = 0;
             state.user.level = 1;
             state.user.dailyStreak = 0;
@@ -1401,7 +1531,7 @@ document.getElementById("reset-database-btn").addEventListener("click", async ()
             await syncUserProgress();
             
             updateHeaderHUD();
-            notifyNewLog("Server database formatted.");
+            notifyNewLog("Local progress database formatted.");
             SoundFX.playLevelUp();
             alert("Database formatted!");
             document.querySelector(".nav-item[data-tab='dashboard']").click();
