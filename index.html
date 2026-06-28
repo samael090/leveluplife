@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LevelUp Life - Gamified Productivity</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700&family=Orbitron:wght@400;700;900&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <!-- Lucide Icons for premium visual elements -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="brand">
+                <div class="logo-glow"></div>
+                <i data-lucide="swords" class="logo-icon"></i>
+                <h1>LEVEL<span>UP</span> LIFE</h1>
+            </div>
+            
+            <div class="user-profile-summary">
+                <div class="avatar-container">
+                    <img id="profile-avatar" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='48' fill='%231F2940' stroke='%2300D4FF' stroke-width='4'/><path d='M50,25 A15,15 0 0,1 50,55 A15,15 0 0,1 50,25 Z' fill='%237B2FF7'/><path d='M20,80 C20,65 30,60 50,60 C70,60 80,65 80,80 Z' fill='%2300D4FF'/></svg>" alt="User Avatar">
+                    <div class="level-badge" id="sidebar-level-num">1</div>
+                </div>
+                <div class="profile-info">
+                    <h3 id="sidebar-username">Player 1</h3>
+                    <p id="sidebar-rank">Beginner</p>
+                </div>
+            </div>
+
+            <nav class="nav-menu">
+                <a href="#dashboard" class="nav-item active" data-tab="dashboard">
+                    <i data-lucide="layout-dashboard"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="#quests" class="nav-item" data-tab="quests">
+                    <i data-lucide="scroll"></i>
+                    <span>Quests</span>
+                    <span class="badge-count" id="pending-quests-count">0</span>
+                </a>
+                <a href="#calendar" class="nav-item" data-tab="calendar">
+                    <i data-lucide="calendar-days"></i>
+                    <span>Calendar</span>
+                </a>
+                <a href="#achievements" class="nav-item" data-tab="achievements">
+                    <i data-lucide="trophy"></i>
+                    <span>Achievements</span>
+                </a>
+                <a href="#analytics" class="nav-item" data-tab="analytics">
+                    <i data-lucide="bar-chart-3"></i>
+                    <span>Analytics</span>
+                </a>
+                <a href="#settings" class="nav-item" data-tab="settings">
+                    <i data-lucide="sliders"></i>
+                    <span>Settings</span>
+                </a>
+            </nav>
+
+            <div class="sidebar-footer">
+                <button class="logout-btn" id="logout-trigger-btn">
+                    <i data-lucide="log-out"></i> Sign Out
+                </button>
+                <p style="margin-top: 10px;">&copy; 2026 LevelUp Life</p>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Top Header Bar -->
+            <header class="header">
+                <div class="header-left">
+                    <div class="mobile-toggle" id="mobile-sidebar-toggle">
+                        <i data-lucide="menu"></i>
+                    </div>
+                    <div class="date-display">
+                        <h2 id="current-day">Saturday</h2>
+                        <p id="current-date">June 27, 2026</p>
+                    </div>
+                </div>
+
+                <div class="header-right">
+                    <!-- Streaks Widget -->
+                    <div class="header-widget streak-widget glow-orange" title="Daily Streak">
+                        <i data-lucide="flame" class="icon-streak-fire"></i>
+                        <span class="widget-value" id="daily-streak-val">0</span>
+                    </div>
+
+                    <div class="header-widget streak-widget glow-purple" title="Weekly Streak">
+                        <i data-lucide="zap" class="icon-streak-zap"></i>
+                        <span class="widget-value" id="weekly-streak-val">0</span>
+                    </div>
+
+                    <!-- XP HUD -->
+                    <div class="xp-hud">
+                        <span class="hud-label">TOTAL XP:</span>
+                        <span class="hud-val" id="total-xp-val">0</span>
+                    </div>
+
+                    <!-- Sound Toggle -->
+                    <button class="audio-toggle" id="audio-toggle-btn" title="Toggle Sound FX">
+                        <i data-lucide="volume-2" id="audio-icon"></i>
+                    </button>
+
+                    <!-- Notifications / Combat Log -->
+                    <div class="log-trigger-container">
+                        <button class="log-trigger-btn" id="log-trigger-btn" title="Activity Log">
+                            <i data-lucide="bell"></i>
+                            <span class="log-badge" id="log-badge-count" style="display:none;">0</span>
+                        </button>
+                        <div class="combat-log-dropdown" id="combat-log-dropdown">
+                            <div class="dropdown-header">
+                                <h3>COMBAT LOG</h3>
+                                <button id="clear-log-btn">Clear</button>
+                            </div>
+                            <div class="dropdown-content" id="combat-log-list">
+                                <div class="empty-log-msg">No logs recorded yet.</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Screen Views Container -->
+            <div class="view-container">
+                <!-- VIEW 1: DASHBOARD -->
+                <section id="dashboard" class="view-section active">
+                    <div class="welcome-banner glow-blue">
+                        <div class="welcome-text">
+                            <h1>WELCOME BACK, <span id="banner-username">PLAYER 1</span></h1>
+                            <p>Ready to level up today? Complete your daily quests to maintain your streak!</p>
+                        </div>
+                        <div class="level-progress-card">
+                            <div class="level-title-container">
+                                <span class="card-level-label">LEVEL <span id="dash-level-num">1</span></span>
+                                <span class="card-rank-label" id="dash-rank-name">BEGINNER</span>
+                            </div>
+                            <div class="progress-bar-container">
+                                <div class="progress-bar-fill" id="dash-xp-progress" style="width: 0%;"></div>
+                            </div>
+                            <div class="progress-stats">
+                                <span id="dash-xp-fraction">0 / 500 XP</span>
+                                <span id="dash-xp-percent">0%</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Quick Stats Dashboard Grid -->
+                    <div class="dashboard-grid">
+                        <div class="card stat-card glow-cyan">
+                            <div class="stat-icon-wrapper bg-cyan">
+                                <i data-lucide="check-circle-2"></i>
+                            </div>
+                            <div class="stat-info">
+                                <p class="stat-label">Daily Quests Completed</p>
+                                <h2 class="stat-value" id="dash-quests-completed">0 / 0</h2>
+                            </div>
+                        </div>
+
+                        <div class="card stat-card glow-green">
+                            <div class="stat-icon-wrapper bg-green">
+                                <i data-lucide="sparkles"></i>
+                            </div>
+                            <div class="stat-info">
+                                <p class="stat-label">XP Earned Today</p>
+                                <h2 class="stat-value" id="dash-xp-earned-today">+0</h2>
+                            </div>
+                        </div>
+
+                        <div class="card stat-card glow-orange">
+                            <div class="stat-icon-wrapper bg-orange">
+                                <i data-lucide="award"></i>
+                            </div>
+                            <div class="stat-info">
+                                <p class="stat-label">Next Unlock Milestone</p>
+                                <h2 class="stat-value" id="dash-next-milestone">Warrior</h2>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="dashboard-split-grid">
+                        <!-- Daily Active Quests Preview -->
+                        <div class="card split-panel main-panel">
+                            <div class="panel-header">
+                                <h2><i data-lucide="list-todo"></i> TODAY'S ACTIVE QUESTS</h2>
+                                <a href="#quests" class="nav-shortcut" data-target="quests">Manage Quests &rarr;</a>
+                            </div>
+                            <div class="panel-body">
+                                <div id="dash-quests-list" class="quests-checkbox-list">
+                                    <div class="empty-quest-msg">
+                                        <i data-lucide="smile"></i>
+                                        <p>All clear! Create some quests in the Quests tab to begin your journey.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Sidebar Info on Dashboard -->
+                        <div class="card split-panel side-panel">
+                            <div class="panel-header">
+                                <h2><i data-lucide="calendar"></i> WEEKLY TRACKER</h2>
+                            </div>
+                            <div class="panel-body">
+                                <div class="weekly-streak-days" id="weekly-days-container">
+                                    <div class="week-day" data-day="1"><span class="day-letter">M</span><div class="day-dot"></div></div>
+                                    <div class="week-day" data-day="2"><span class="day-letter">T</span><div class="day-dot"></div></div>
+                                    <div class="week-day" data-day="3"><span class="day-letter">W</span><div class="day-dot"></div></div>
+                                    <div class="week-day" data-day="4"><span class="day-letter">T</span><div class="day-dot"></div></div>
+                                    <div class="week-day" data-day="5"><span class="day-letter">F</span><div class="day-dot"></div></div>
+                                    <div class="week-day" data-day="6"><span class="day-letter">S</span><div class="day-dot"></div></div>
+                                    <div class="week-day" data-day="0"><span class="day-letter">S</span><div class="day-dot"></div></div>
+                                </div>
+                                <div class="streak-motivational-tip">
+                                    <h4 id="streak-tip-title">Streak Multiplier: Active</h4>
+                                    <p id="streak-tip-text">Complete all your quests before midnight to increment your streak and earn bonus multipliers!</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- VIEW 2: QUESTS -->
+                <section id="quests" class="view-section">
+                    <div class="view-header">
+                        <div class="header-text">
+                            <h1>QUEST BOARD</h1>
+                            <p>Engage in tasks, defeat procrastination, and reap the rewards.</p>
+                        </div>
+                        <button class="btn btn-primary" id="open-quest-modal-btn">
+                            <i data-lucide="plus"></i> NEW QUEST
+                        </button>
+                    </div>
+
+                    <!-- Quests Filter Bar -->
+                    <div class="filter-bar">
+                        <div class="filter-tabs">
+                            <button class="filter-tab active" data-filter="all">All Quests</button>
+                            <button class="filter-tab" data-filter="pending">Active</button>
+                            <button class="filter-tab" data-filter="completed">Completed</button>
+                        </div>
+                        <div class="filter-categories-dropdown">
+                            <select id="category-filter-select">
+                                <option value="all">All Categories</option>
+                                <option value="workout">Workout</option>
+                                <option value="reading">Reading</option>
+                                <option value="meditation">Meditation</option>
+                                <option value="custom">Custom</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Quests List Grid -->
+                    <div class="quests-grid" id="quests-grid-container">
+                        <!-- Dynamic quest items -->
+                    </div>
+                </section>
+
+                <!-- VIEW 3: CALENDAR Range Grid -->
+                <section id="calendar" class="view-section">
+                    <div class="view-header">
+                        <div class="header-text">
+                            <h1>EXPEDITION CALENDAR</h1>
+                            <p>Observe quest completion history log grids across months.</p>
+                        </div>
+                    </div>
+
+                    <div class="calendar-layout card glow-purple">
+                        <div class="calendar-header-controls">
+                            <button class="btn btn-secondary" id="prev-month-btn">
+                                <i data-lucide="chevron-left"></i>
+                            </button>
+                            <h2 id="calendar-month-year" class="orbitron-text">June 2026</h2>
+                            <button class="btn btn-secondary" id="next-month-btn">
+                                <i data-lucide="chevron-right"></i>
+                            </button>
+                        </div>
+                        <div class="calendar-grid-header">
+                            <div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div><div>Sun</div>
+                        </div>
+                        <div class="calendar-grid" id="calendar-grid-cells">
+                            <!-- Generated dynamically by JS -->
+                        </div>
+                    </div>
+                </section>
+
+                <!-- VIEW 4: ACHIEVEMENTS -->
+                <section id="achievements" class="view-section">
+                    <div class="view-header">
+                        <div class="header-text">
+                            <h1>HALL OF TRIUMPHS</h1>
+                            <p>Unlock achievements and claim your rightful place in the rankings.</p>
+                        </div>
+                    </div>
+
+                    <div class="achievements-layout">
+                        <!-- Left Panel: Badges Grid -->
+                        <div class="card achievements-card">
+                            <h2><i data-lucide="award"></i> EARNED BADGES</h2>
+                            <div class="badges-grid" id="badges-grid-container">
+                                <!-- Achievements injected dynamically -->
+                            </div>
+                        </div>
+
+                        <!-- Right Panel: Mock Leaderboard -->
+                        <div class="card leaderboard-card glow-gold">
+                            <div class="leaderboard-header">
+                                <h2><i data-lucide="crown"></i> RIVAL LEADERBOARD</h2>
+                                <span class="sub-label">Rivals online</span>
+                            </div>
+                            <div class="leaderboard-list" id="leaderboard-list-container">
+                                <!-- Rivals injected dynamically -->
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- VIEW 5: ANALYTICS -->
+                <section id="analytics" class="view-section">
+                    <div class="view-header">
+                        <div class="header-text">
+                            <h1>COMPLETION INTEL</h1>
+                            <p>Analyze your progress, productivity metrics, and XP logs.</p>
+                        </div>
+                    </div>
+
+                    <!-- Stats overview row -->
+                    <div class="stats-overview-row">
+                        <div class="card stat-block">
+                            <h3 id="stat-total-completions">0</h3>
+                            <p>All-Time Completions</p>
+                        </div>
+                        <div class="card stat-block">
+                            <h3 id="stat-current-streak">0</h3>
+                            <p>Active Daily Streak</p>
+                        </div>
+                        <div class="card stat-block">
+                            <h3 id="stat-max-streak">0</h3>
+                            <p>Max Streak Record</p>
+                        </div>
+                        <div class="card stat-block">
+                            <h3 id="stat-daily-avg-xp">0</h3>
+                            <p>Avg. XP per Day</p>
+                        </div>
+                    </div>
+
+                    <!-- Charts row -->
+                    <div class="charts-row">
+                        <div class="card chart-panel">
+                            <h3><i data-lucide="trending-up"></i> XP GAINED OVER TIME (PAST 7 DAYS)</h3>
+                            <div class="chart-container" id="xp-history-chart">
+                                <svg class="custom-svg-chart" id="svg-xp-line-chart" viewBox="0 0 500 200" xmlns="http://www.w3.org/2000/svg">
+                                </svg>
+                            </div>
+                        </div>
+
+                        <div class="card chart-panel mini-panel">
+                            <h3><i data-lucide="pie-chart"></i> CATEGORY RATIO</h3>
+                            <div class="donut-chart-container" id="category-ratio-chart">
+                                <svg class="custom-svg-chart" id="svg-donut-chart" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                                </svg>
+                                <div class="donut-legend" id="donut-legend-container"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Task History Log -->
+                    <div class="card history-panel">
+                        <div class="panel-header">
+                            <h2><i data-lucide="history"></i> EXPEDITION LOG</h2>
+                        </div>
+                        <div class="history-table-container">
+                            <table class="history-table">
+                                <thead>
+                                    <tr>
+                                        <th>Date & Time</th>
+                                        <th>Quest Name</th>
+                                        <th>Category</th>
+                                        <th>XP Reward</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="history-log-tbody">
+                                    <tr>
+                                        <td colspan="4" style="text-align: center;">No quests logged yet.</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- VIEW 6: SETTINGS -->
+                <section id="settings" class="view-section">
+                    <div class="view-header">
+                        <div class="header-text">
+                            <h1>SYSTEM SETTINGS</h1>
+                            <p>Configure your terminal settings and backup progress.</p>
+                        </div>
+                    </div>
+
+                    <div class="settings-grid">
+                        <div class="card settings-card">
+                            <h2><i data-lucide="user"></i> PROFILE PROTOCOL</h2>
+                            <form id="profile-settings-form">
+                                <div class="form-group">
+                                    <label for="settings-username-input">Player Codex Name</label>
+                                    <input type="text" id="settings-username-input" class="cyber-input" value="Player 1" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Avatar Class</label>
+                                    <div class="avatar-selectors">
+                                        <div class="avatar-select-option active" data-avatar="ninja">
+                                            <svg viewBox="0 0 100 100" class="avatar-svg"><circle cx="50" cy="50" r="48" fill="#1F2940" stroke="#00D4FF" stroke-width="4"/><path d="M50,25 A15,15 0 0,1 50,55 A15,15 0 0,1 50,25 Z" fill="#7B2FF7"/><path d="M20,80 C20,65 30,60 50,60 C70,60 80,65 80,80 Z" fill="#00D4FF"/></svg>
+                                            <span>Cyber-Ninja</span>
+                                        </div>
+                                        <div class="avatar-select-option" data-avatar="mage">
+                                            <svg viewBox="0 0 100 100" class="avatar-svg"><circle cx="50" cy="50" r="48" fill="#1F2940" stroke="#7B2FF7" stroke-width="4"/><polygon points="50,15 25,45 75,45" fill="#FF7A00"/><path d="M20,80 C20,65 30,60 50,60 C70,60 80,65 80,80 Z" fill="#7B2FF7"/></svg>
+                                            <span>Techno-Mage</span>
+                                        </div>
+                                        <div class="avatar-select-option" data-avatar="valkyrie">
+                                            <svg viewBox="0 0 100 100" class="avatar-svg"><circle cx="50" cy="50" r="48" fill="#1F2940" stroke="#FFD700" stroke-width="4"/><circle cx="50" cy="35" r="12" fill="#FFD700"/><path d="M20,80 C20,60 30,60 50,60 C70,60 80,60 80,80 Z" fill="#39FF14"/></svg>
+                                            <span>Holo-Valkyrie</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <button type="submit" class="btn btn-accent">SAVE PROFILE</button>
+                            </form>
+                        </div>
+
+                        <!-- Card 2: Memory Banks / Diagnostics -->
+                        <div class="card settings-card">
+                            <h2><i data-lucide="database"></i> DIAGNOSTICS & RESET</h2>
+                            <div class="memory-actions">
+                                <div class="memory-setting-row">
+                                    <div>
+                                        <h4>Simulate Daily Transition</h4>
+                                        <p class="warning-text">Advance system dates by 24 hours to trigger quest resets and test SMS/Email alarms.</p>
+                                    </div>
+                                    <button class="btn btn-secondary" id="simulate-reset-btn">RUN TRIGGER</button>
+                                </div>
+                                <div class="memory-setting-row danger-zone">
+                                    <div>
+                                        <h4>Format Account Progress</h4>
+                                        <p class="warning-text">Delete server quests database and start from level 1 again.</p>
+                                    </div>
+                                    <button class="btn btn-danger" id="reset-database-btn">HARD RESET</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <!-- MODAL 1: CREATE QUEST -->
+    <div class="modal-overlay" id="quest-modal">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h2><i data-lucide="sword"></i> INITIALIZE QUEST</h2>
+                <button class="modal-close" id="close-quest-modal-btn">&times;</button>
+            </div>
+            <form id="create-quest-form">
+                <div class="modal-body">
+                    <div class="form-row">
+                        <div class="form-group full-width">
+                            <label for="quest-title">Quest Objective Name</label>
+                            <input type="text" id="quest-title" class="cyber-input" placeholder="e.g. 5K Run, Complete Chapter 3, etc." required>
+                        </div>
+                    </div>
+                    <div class="form-row split">
+                        <div class="form-group">
+                            <label for="quest-category">Category Archetype</label>
+                            <select id="quest-category" class="cyber-select">
+                                <option value="workout">Workout (+50 XP)</option>
+                                <option value="reading">Reading (+30 XP)</option>
+                                <option value="meditation">Meditation (+20 XP)</option>
+                                <option value="custom">Custom</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="quest-xp">XP Reward Bounty</label>
+                            <input type="number" id="quest-xp" class="cyber-input" value="50" min="5" max="1000">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group full-width">
+                            <label>Quest Recurrence Protocol</label>
+                            <div class="recurrence-toggle-group">
+                                <label class="recurrence-radio">
+                                    <input type="radio" name="recurrence-type" value="daily" checked>
+                                    <span class="custom-radio">Daily Reset</span>
+                                </label>
+                                <label class="recurrence-radio">
+                                    <input type="radio" name="recurrence-type" value="custom">
+                                    <span class="custom-radio">Custom Days</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-row" id="custom-days-row" style="display:none;">
+                        <div class="form-group full-width">
+                            <label>Schedule Target Days</label>
+                            <div class="days-checkbox-grid">
+                                <label class="day-checkbox"><input type="checkbox" value="1"><span>Mon</span></label>
+                                <label class="day-checkbox"><input type="checkbox" value="2"><span>Tue</span></label>
+                                <label class="day-checkbox"><input type="checkbox" value="3"><span>Wed</span></label>
+                                <label class="day-checkbox"><input type="checkbox" value="4"><span>Thu</span></label>
+                                <label class="day-checkbox"><input type="checkbox" value="5"><span>Fri</span></label>
+                                <label class="day-checkbox"><input type="checkbox" value="6"><span>Sat</span></label>
+                                <label class="day-checkbox"><input type="checkbox" value="0"><span>Sun</span></label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group full-width">
+                            <label for="quest-notes">Quest Details / Notes</label>
+                            <textarea id="quest-notes" class="cyber-textarea" placeholder="Optional details, instructions, or notes for this quest..."></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" id="cancel-quest-modal-btn">ABORT</button>
+                    <button type="submit" class="btn btn-primary">LAUNCH QUEST</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL 2: LEVEL UP ANIMATION SCREEN -->
+    <div class="modal-overlay levelup-overlay" id="levelup-modal" style="display:none;">
+        <div class="levelup-animation-card">
+            <div class="levelup-header">
+                <h1 class="orbitron-text neon-text-glow-gold">LEVEL UP!</h1>
+            </div>
+            <div class="levelup-body">
+                <div class="levelup-crest">
+                    <i data-lucide="shield-alert" class="crest-icon"></i>
+                    <div class="glow-halo"></div>
+                </div>
+                <h2 id="levelup-new-rank">WARRIOR</h2>
+                <p>You have unlocked new potential and ranked up!</p>
+                <div class="levelup-stats-panel">
+                    <div class="levelup-stat">
+                        <span class="stat-lbl">NEW LEVEL</span>
+                        <span class="stat-val" id="levelup-level-num">2</span>
+                    </div>
+                    <div class="levelup-stat">
+                        <span class="stat-lbl">REWARD</span>
+                        <span class="stat-val">+100 GOLD XP</span>
+                    </div>
+                </div>
+            </div>
+            <div class="levelup-footer">
+                <button class="btn btn-accent" id="close-levelup-btn">CLAIM GLORY</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- AUTHENTICATION VIEW SCREEN OVERLAY -->
+    <div class="auth-overlay-backdrop" id="auth-screen">
+        <div class="auth-card glow-blue">
+            <div class="auth-brand">
+                <i data-lucide="swords" class="auth-logo-icon"></i>
+                <h1 class="orbitron-text">LEVEL<span>UP</span> LIFE</h1>
+                <p class="auth-subtitle">PLAYER ACCESS PORTAL</p>
+            </div>
+            
+            <div class="auth-tabs">
+                <button class="auth-tab-btn active" id="auth-login-tab">LOGIN</button>
+                <button class="auth-tab-btn" id="auth-register-tab">REGISTER</button>
+            </div>
+            
+            <!-- Login Form -->
+            <form id="login-form" class="auth-form active">
+                <div class="form-group">
+                    <label for="login-email">Email Address</label>
+                    <input type="email" id="login-email" class="cyber-input" placeholder="player@domain.com" required autocomplete="email">
+                </div>
+                <div class="form-group">
+                    <label for="login-password">Access Code</label>
+                    <input type="password" id="login-password" class="cyber-input" placeholder="••••••••" required autocomplete="current-password">
+                </div>
+                <button type="submit" class="btn btn-primary full-width" style="margin-top: 1rem;">ESTABLISH CONNECT</button>
+            </form>
+            
+            <!-- Register Form -->
+            <form id="register-form" class="auth-form">
+                <div class="form-group">
+                    <label for="register-username">Player Codex Name</label>
+                    <input type="text" id="register-username" class="cyber-input" placeholder="e.g. Aria_Blade" required autocomplete="username">
+                </div>
+                <div class="form-group">
+                    <label for="register-email">Email Address</label>
+                    <input type="email" id="register-email" class="cyber-input" placeholder="player@domain.com" required autocomplete="email">
+                </div>
+                <div class="form-group">
+                    <label for="register-phone">Phone Comms Link (Optional)</label>
+                    <input type="tel" id="register-phone" class="cyber-input" placeholder="e.g. +15551234567 for SMS alarms" autocomplete="tel">
+                </div>
+                <div class="form-group">
+                    <label for="register-password">Access Code</label>
+                    <input type="password" id="register-password" class="cyber-input" placeholder="••••••••" required autocomplete="new-password">
+                </div>
+                <button type="submit" class="btn btn-accent full-width" style="margin-top: 1rem;">SPAWN PLAYER AVATAR</button>
+            </form>
+            
+            <div id="auth-error-message" class="auth-error" style="display:none;"></div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
